@@ -1,3 +1,4 @@
+.deps
 .idea
 node_modules
 .env
