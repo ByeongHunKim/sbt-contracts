@@ -15,6 +15,8 @@ contract SBT is ERC721, ERC721Enumerable, Ownable {
         string memory baseURI_
     ) ERC721(name_, symbol_) {
         baseURI = baseURI_;
+        adminAddresses[msg.sender] = true;
+        adminAddressesArray.push(msg.sender);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -23,6 +25,9 @@ contract SBT is ERC721, ERC721Enumerable, Ownable {
 
     // Mapping from token ID to locked status
     mapping(uint256 => bool) _locked;
+
+    mapping(address => bool) public adminAddresses;
+    address[] public adminAddressesArray;
 
     /// @notice Emitted when the locking status is changed to locked.
     /// @dev If a token is minted and the status is locked, this event should be emitted.
@@ -44,6 +49,10 @@ contract SBT is ERC721, ERC721Enumerable, Ownable {
         return _locked[tokenId];
     }
 
+    function getAdminAddressList() external view returns(address[] memory) {
+        return adminAddressesArray;
+    }
+
     function safeMint(address to, uint256 tokenId) public onlyOwner {
         require(balanceOf(to) == 0, "MNT01");
         require(_locked[tokenId] != true, "MNT02");
@@ -54,7 +63,13 @@ contract SBT is ERC721, ERC721Enumerable, Ownable {
         _safeMint(to, tokenId);
     }
 
-    function burn(uint256 tokenId) public {
+    /// @dev Access modifier for Admin-only functionality
+    modifier onlyAdmin() {
+        require(adminAddresses[msg.sender]);
+        _;
+    }
+
+    function burn(uint256 tokenId) external onlyAdmin {
         require(msg.sender == ownerOf(tokenId), "BRN01");
         _burn(tokenId);
     }
@@ -104,5 +119,27 @@ contract SBT is ERC721, ERC721Enumerable, Ownable {
         returns (bool)
     {
         return _interfaceId == type(IERC5192).interfaceId || super.supportsInterface(_interfaceId);
+    }
+
+    /// @dev Adds a admin address
+    function addAdminAddress(address _address) external onlyOwner {
+        require(!adminAddresses[_address], "Address is already an admin");
+        adminAddresses[_address] = true;
+        adminAddressesArray.push(_address);
+    }
+
+    /// @dev Removes a admin address
+    function removeAdminAddress(address _address) external onlyOwner {
+        require(adminAddresses[_address], "Address is not an admin");
+        adminAddresses[_address] = false;
+
+        // Remove from the array
+        for (uint i = 0; i < adminAddressesArray.length; i++) {
+            if (adminAddressesArray[i] == _address) {
+                adminAddressesArray[i] = adminAddressesArray[adminAddressesArray.length - 1];
+                adminAddressesArray.pop();
+                break;
+            }
+        }
     }
 }
