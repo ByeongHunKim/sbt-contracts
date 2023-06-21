@@ -16,36 +16,39 @@ describe('SBT', async function () {
     const sbtContract = await ethers.getContractFactory('SBT')
     const sbtName = 'SBT'
     const sbtSymbol = 'SBT'
-    sbt = await sbtContract.deploy(sbtName, sbtSymbol, baseURI)
-    ;[ownerAccount, otherAccount] = await ethers.getSigners()
+    sbt = await sbtContract.deploy(sbtName, sbtSymbol, baseURI);
+    [ownerAccount, otherAccount] = await ethers.getSigners()
+    console.log('ownerAccount',ownerAccount.address)
+    console.log('otherAccount',otherAccount.address)
     await sbt.safeMint(ownerAccount.address, tokenID0)
   })
 
   it('#1 Should mint single SBT', async function () {
     expect(await sbt.balanceOf(ownerAccount.address)).to.equal(1)
     expect(await sbt.tokenURI(0)).to.equal(baseURI + '0')
+    console.log(await sbt.tokenURI(0))
   })
 
   it('#2 Should fail minting twice with same address', async function () {
-    await expect(sbt.safeMint(ownerAccount.address, tokenID1)).to.be.revertedWith('MNT01')
+    await expect(sbt.safeMint(ownerAccount.address, tokenID1)).to.be.rejectedWith('MNT01')
   })
 
   it('#3 Should fail minting twice with same tokenID', async function () {
-    await expect(sbt.safeMint(otherAccount.address, tokenID0)).to.be.revertedWith('MNT02')
+    await expect(sbt.safeMint(otherAccount.address, tokenID0)).to.be.rejectedWith('MNT02')
   })
 
   it('#4 Should burn SBT', async function () {
     expect(await sbt.ownerOf(tokenID0)).to.equal(ownerAccount.address)
     expect(await sbt.balanceOf(ownerAccount.address)).to.equal(1)
     await sbt.burn(tokenID0)
-    await expect(sbt.ownerOf(tokenID0)).to.be.revertedWith('ERC721: invalid token ID')
+    await expect(sbt.ownerOf(tokenID0)).to.be.rejectedWith('ERC721: invalid token ID')
     expect(await sbt.balanceOf(ownerAccount.address)).to.equal(0)
   })
 
   it('#5 Should fail burning non owning SBT', async function () {
     await sbt.safeMint(otherAccount.address, tokenID1)
     expect(await sbt.ownerOf(tokenID1)).to.be.equal(otherAccount.address)
-    await expect(sbt.burn(tokenID1)).to.be.revertedWith('BRN01')
+    await expect(sbt.burn(tokenID1)).to.be.rejectedWith('BRN01')
   })
 
   it('#6 Locked status should be True', async function () {
@@ -54,12 +57,12 @@ describe('SBT', async function () {
   })
 
   it('#7 Locked status should be reverted not minted tokenID', async function () {
-    await expect(sbt.locked(tokenID1)).to.be.reverted
+    await expect(sbt.locked(tokenID1)).to.be.rejected
   })
 
   it('#8 transferFrom should revert', async function () {
     await expect(sbt.transferFrom(ownerAccount.address, otherAccount.address, tokenID0)).to.be
-      .reverted
+      .rejected
   })
 
   it('#9 safeTransferFrom(address,address,uint256) should revert', async function () {
@@ -69,7 +72,7 @@ describe('SBT', async function () {
         otherAccount.address,
         tokenID0
       )
-    ).to.be.reverted
+    ).to.be.rejected
   })
 
   it('#10 safeTransferFrom(address,address,uint256,bytes) should revert', async function () {
@@ -80,7 +83,7 @@ describe('SBT', async function () {
         tokenID0,
         []
       )
-    ).to.be.reverted
+    ).to.be.rejected
   })
 
   // To aid recognition that an EIP-721 token implements "soulbinding" via this EIP upon calling EIP-721's
