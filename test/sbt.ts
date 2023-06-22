@@ -20,7 +20,7 @@ describe('SBT', async function () {
     [ownerAccount, otherAccount] = await ethers.getSigners()
     console.log('ownerAccount',ownerAccount.address)
     console.log('otherAccount',otherAccount.address)
-    await sbt.safeMint(ownerAccount.address, tokenID0)
+    await sbt.safeMint(ownerAccount.address)
   })
 
   it('#1 Should mint single SBT', async function () {
@@ -30,12 +30,12 @@ describe('SBT', async function () {
   })
 
   it('#2 Should fail minting twice with same address', async function () {
-    await expect(sbt.safeMint(ownerAccount.address, tokenID1)).to.be.rejectedWith('MNT01')
+    await expect(sbt.safeMint(ownerAccount.address)).to.be.rejectedWith('MNT01')
   })
 
-  it('#3 Should fail minting twice with same tokenID', async function () {
-    await expect(sbt.safeMint(otherAccount.address, tokenID0)).to.be.rejectedWith('MNT02')
-  })
+  // it('#3 Should fail minting twice with same tokenID', async function () {
+  //   await expect(sbt.safeMint(otherAccount.address)).to.be.rejectedWith('MNT02')
+  // })
 
   it('#4 Should burn SBT', async function () {
     expect(await sbt.ownerOf(tokenID0)).to.equal(ownerAccount.address)
@@ -46,7 +46,7 @@ describe('SBT', async function () {
   })
 
   it('#5 Should fail burning non owning SBT', async function () {
-    await sbt.safeMint(otherAccount.address, tokenID1)
+    await sbt.safeMint(otherAccount.address)
     expect(await sbt.ownerOf(tokenID1)).to.be.equal(otherAccount.address)
     await expect(sbt.burn(tokenID1)).to.be.rejectedWith('BRN01')
   })

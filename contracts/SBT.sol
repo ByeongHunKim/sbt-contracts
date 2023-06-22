@@ -4,9 +4,11 @@ pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interfaces/IERC5192.sol";
 
 contract SBT is ERC721, ERC721Enumerable, Ownable {
+    using Counters for Counters.Counter;
     string private baseURI;
 
     constructor(
@@ -18,6 +20,8 @@ contract SBT is ERC721, ERC721Enumerable, Ownable {
         adminAddresses[msg.sender] = true;
         adminAddressesArray.push(msg.sender);
     }
+
+    Counters.Counter public tokenIdNum;
 
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
@@ -53,14 +57,13 @@ contract SBT is ERC721, ERC721Enumerable, Ownable {
         return adminAddressesArray;
     }
 
-    function safeMint(address to, uint256 tokenId) public onlyOwner {
+    function safeMint(address to) public onlyOwner {
         require(balanceOf(to) == 0, "MNT01");
-        require(_locked[tokenId] != true, "MNT02");
-
-        _locked[tokenId] = true;
-        emit Locked(tokenId);
-
-        _safeMint(to, tokenId);
+        uint256 newTokenId = tokenIdNum.current();
+        _locked[newTokenId] = true;
+        emit Locked(newTokenId);
+        _safeMint(to, newTokenId);
+        tokenIdNum.increment();
     }
 
     /// @dev Access modifier for Admin-only functionality
